@@ -51,7 +51,6 @@ char *encode_64_string(const char *data, size_t size, size_t *encoded_size)
 {
   *encoded_size = ((size + 2) / 3) * 4;
   char *encoded = (char *)malloc(*encoded_size);
-  printf("encoded_size: %ld\n", *encoded_size);
   for (size_t i = 0, j = 0; i < size; i += 3, j += 4)
   {
     char triplet[3];
@@ -62,14 +61,27 @@ char *encode_64_string(const char *data, size_t size, size_t *encoded_size)
     int32_t triplet_size = i + 2 < size ? 3 : i + 1 < size ? 2
                                                            : 1;
     int returned = _encode_64_triplet(triplet, triplet_size, encoded_triplet);
-    printf("encoded_triplet[0] = 0x%x\n", encoded_triplet[0]);
-    // _encode_64_triplet(triplet, triplet_size, encoded_triplet);
-    // encoded[j] = encoded_triplet[0];
-    // encoded[j + 1] = encoded_triplet[1];
-    // encoded[j + 2] = encoded_triplet[2];
-    // encoded[j + 3] = encoded_triplet[3];
+    _encode_64_triplet(triplet, triplet_size, encoded_triplet);
+    encoded[j] = encoded_triplet[0];
+    encoded[j + 1] = encoded_triplet[1];
+    encoded[j + 2] = encoded_triplet[2];
+    encoded[j + 3] = encoded_triplet[3];
   }
   return encoded;
+}
+
+void print_encoded(char *encoded, size_t encoded_size)
+{
+  FILE *fp = fopen("encoded.txt", "w");
+  for (size_t i = 0; i < encoded_size; i++)
+  {
+    fprintf(fp, "%c", encoded[i]);
+    if (i % 76 == 76 - 1)
+    {
+      fprintf(fp, "\n");
+    }
+  }
+  printf("\n");
 }
 
 int main(int argc, char **argv)
@@ -77,14 +89,9 @@ int main(int argc, char **argv)
   char *filename = get_filename(argc, argv);
   size_t size;
   char *data = readFile(filename, &size);
-  for (int i = 0; i < size; i++)
-    printf("%d\n", data[i]);
   size_t encoded_size;
   char *encoded = encode_64_string(data, size, &encoded_size);
-  for (size_t i = 0; i < encoded_size; i++)
-  {
-    printf("%c\n", encoded[i]);
-  }
+  print_encoded(encoded, encoded_size);
   free(data);
   free(encoded);
 }
