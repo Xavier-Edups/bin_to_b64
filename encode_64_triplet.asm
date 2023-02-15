@@ -1,14 +1,28 @@
+global _encode_64_triplet
+
 section .data
-		symboltable db "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/", 0
-		tablelen db equ $ - symboltable
+
+base_64_table:
+    db  'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/'
 
 section .text
-        global _encode_64_triplet
 
+; _encode_64_triplet_c(char *triplet, int32_t triplet_size, char *encoded_triplet);
 _encode_64_triplet:
-        mov     rax, rdi                ; result (rax) initially holds x
-        cmp     rax, rsi                ; is x less than y?
-        cmovl   rax, rsi                ; if so, set result to y
-        cmp     rax, rdx                ; is max(x,y) less than z?
-        cmovl   rax, rdx                ; if so, set result to z
-        ret                             ; the max will be in rax
+    ; uint32_t triplet_value = (triplet[0] << 16) | (triplet[1] << 8) | triplet[2]; // r8
+    mov  r8b, [rdi]
+    shl  r8, 8
+    mov  r8b, [rdi + 1]
+    shl  r8, 8
+    mov  r8b, [rdi + 2]
+    mov  rax, r8
+
+    ; encoded_triplet[0] = base_64_table[(triplet_value >> 18) & 0x3F];
+    mov  r9, r8
+    shr  r9, 18
+    mov  [rdx], r9b
+
+    ; mov   rax, rdi   ; argument 1
+    ; add   rax, rsi   ; argument 2
+    ; add   rax, rdx   ; argument 3
+    ret

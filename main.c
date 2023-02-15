@@ -3,19 +3,21 @@
 #include <inttypes.h>
 #include <stdint.h>
 
-void encode_64_triplet_c(char *triplet, int32_t triplet_size, char *encoded_triplet)
-{
-  char *base_64_table = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
-  uint32_t triplet_value = (triplet[0] << 16) | (triplet[1] << 8) | triplet[2];
-  encoded_triplet[0] = base_64_table[(triplet_value >> 18) & 0x3F];
-  encoded_triplet[1] = base_64_table[(triplet_value >> 12) & 0x3F];
-  encoded_triplet[2] = base_64_table[(triplet_value >> 6) & 0x3F];
-  encoded_triplet[3] = base_64_table[triplet_value & 0x3F];
-  if (triplet_size < 3)
-    encoded_triplet[3] = '=';
-  if (triplet_size < 2)
-    encoded_triplet[2] = '=';
-}
+int _encode_64_triplet(char *triplet, int32_t triplet_size, char *encoded_triplet);
+
+// void _encode_64_triplet_c(char *triplet, int32_t triplet_size, char *encoded_triplet)
+// {
+//   char *base_64_table = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+//   uint32_t triplet_value = (triplet[0] << 16) | (triplet[1] << 8) | triplet[2];
+//   encoded_triplet[0] = base_64_table[(triplet_value >> 18) & 0x3F];
+//   encoded_triplet[1] = base_64_table[(triplet_value >> 12) & 0x3F];
+//   encoded_triplet[2] = base_64_table[(triplet_value >> 6) & 0x3F];
+//   encoded_triplet[3] = base_64_table[triplet_value & 0x3F];
+//   if (triplet_size < 3)
+//     encoded_triplet[3] = '=';
+//   if (triplet_size < 2)
+//     encoded_triplet[2] = '=';
+// }
 
 char *get_filename(int argc, char **argv)
 {
@@ -59,11 +61,13 @@ char *encode_64_string(const char *data, size_t size, size_t *encoded_size)
     triplet[2] = i + 2 < size ? data[i + 2] : 0;
     int32_t triplet_size = i + 2 < size ? 3 : i + 1 < size ? 2
                                                            : 1;
-    encode_64_triplet_c(triplet, triplet_size, encoded_triplet);
-    encoded[j] = encoded_triplet[0];
-    encoded[j + 1] = encoded_triplet[1];
-    encoded[j + 2] = encoded_triplet[2];
-    encoded[j + 3] = encoded_triplet[3];
+    int returned = _encode_64_triplet(triplet, triplet_size, encoded_triplet);
+    printf("encoded_triplet[0] = 0x%x\n", encoded_triplet[0]);
+    // _encode_64_triplet(triplet, triplet_size, encoded_triplet);
+    // encoded[j] = encoded_triplet[0];
+    // encoded[j + 1] = encoded_triplet[1];
+    // encoded[j + 2] = encoded_triplet[2];
+    // encoded[j + 3] = encoded_triplet[3];
   }
   return encoded;
 }
