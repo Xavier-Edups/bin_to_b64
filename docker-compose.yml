@@ -1,0 +1,7 @@
+services:
+  program:
+    build: .
+    working_dir: /app
+    command: tail -f /dev/null
+    volumes:
+      - .:/app

@@ -1,80 +1,86 @@
-#include "stdio.h"
-#include "string.h"
+#include <stdio.h>
+#include <stdlib.h>
+#include <inttypes.h>
+#include <stdint.h>
 
-#define PAD_MARKER '\0'
-
-void pad_b64 (char * byte);
-char *nasm_encode (char *bytes);
-
-int main (int argc, char** argv) {
-    /* Verifica se número de argumentos está correto */
-    if (argc < 2 || argc > 3) {
-        printf("Invalid number of arguments.\nUsage: bin_to_b64 <file> [--decode]\n");
-        return 1;
-    }
-
-    if (argc == 3) {
-        if (strcmp("--decode", argv[2])) {
-            printf("Flag \"%s\" doesn't exist.\nUsage: bin_to_b64 <file> [--decode]\n", argv[2]);
-            return 2;
-        }
-    }
-
-    /* Abre arquivo */
-    FILE *fp;
-    fp = fopen(argv[1], "r");
-
-    if (!fp) {
-        printf("Error: Cannot open file \"%s\".\n", argv[1]);
-        return 3;
-    }
-
-    /* REMOVE debbug only */
-    char* foo = nasm_encode("asddd");
-    pad_b64(foo);
-    printf("%s\n", foo);
-
-    if (argc == 2) { /* Encode no arquivo binário */
-        /* Le arquivo de 3 em 3 bytes */
-        char bytes[3];
-        while (!feof(fp)) {
-            /* TODO */
-
-        }
-    } else { /* Decode de arquivo em base64 */
-        /* TODO */
-    }
-
-    /* Fecha arquivo */
-    fclose(fp);
-
-    return 0;
+void encode_64_triplet_c(char *triplet, int32_t triplet_size, char *encoded_triplet)
+{
+  char *base_64_table = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+  uint32_t triplet_value = (triplet[0] << 16) | (triplet[1] << 8) | triplet[2];
+  encoded_triplet[0] = base_64_table[(triplet_value >> 18) & 0x3F];
+  encoded_triplet[1] = base_64_table[(triplet_value >> 12) & 0x3F];
+  encoded_triplet[2] = base_64_table[(triplet_value >> 6) & 0x3F];
+  encoded_triplet[3] = base_64_table[triplet_value & 0x3F];
+  if (triplet_size < 3)
+    encoded_triplet[3] = '=';
+  if (triplet_size < 2)
+    encoded_triplet[2] = '=';
 }
 
-/* Adiciona '=' para completar byte */
-void pad_b64 (char *encoded) {
-    int i;
-    for (i=0; i<4; i++) {
-        if (encoded[i] == PAD_MARKER) {
-            encoded[i] = '=';
-        }
-    }
-
-    return;
+char *get_filename(int argc, char **argv)
+{
+  if (argc != 2)
+  {
+    printf("Invalid number of arguments.\nUsage: bin_to_b64 <file>\n");
+    exit(1);
+  }
+  return argv[1];
 }
 
-/* Executa encode em uma rotina de NASM */
-char *nasm_encode (char *bytes) {
-    static char encoded_bytes[4];
+char *readFile(const char *filename, size_t *size)
+{
+  FILE *fp = fopen(filename, "rb");
+  if (!fp)
+  {
+    perror("readFile error\n");
+    exit(1);
+  }
+  fseek(fp, 0, SEEK_END);
+  size_t len = ftell(fp);
+  fseek(fp, 0, SEEK_SET);
+  char *data = malloc(len);
+  fread(data, 1, len, fp);
+  fclose(fp);
+  *size = len;
+  return data;
+}
 
-    /* TODO */
+char *encode_64_string(const char *data, size_t size, size_t *encoded_size)
+{
+  *encoded_size = ((size + 2) / 3) * 4;
+  char *encoded = (char *)malloc(*encoded_size);
+  printf("encoded_size: %ld\n", *encoded_size);
+  for (size_t i = 0, j = 0; i < size; i += 3, j += 4)
+  {
+    char triplet[3];
+    char encoded_triplet[4];
+    triplet[0] = data[i];
+    triplet[1] = i + 1 < size ? data[i + 1] : 0;
+    triplet[2] = i + 2 < size ? data[i + 2] : 0;
+    int32_t triplet_size = i + 2 < size ? 3 : i + 1 < size ? 2
+                                                           : 1;
+    encode_64_triplet_c(triplet, triplet_size, encoded_triplet);
+    encoded[j] = encoded_triplet[0];
+    encoded[j + 1] = encoded_triplet[1];
+    encoded[j + 2] = encoded_triplet[2];
+    encoded[j + 3] = encoded_triplet[3];
+  }
+  return encoded;
+}
 
-    /* REMOVE debugg only */
-    printf("%s\n", bytes);
-    encoded_bytes[0] = 'A';
-    encoded_bytes[1] = 'B';
-    encoded_bytes[2] = PAD_MARKER;
-    encoded_bytes[3] = PAD_MARKER;
-
-    return encoded_bytes;
+int main(int argc, char **argv)
+{
+  char *filename = get_filename(argc, argv);
+  size_t size;
+  char *data = readFile(filename, &size);
+  for (int i = 0; i < size; i++)
+    printf("%d\n", data[i]);
+  size_t encoded_size;
+  char *encoded = encode_64_string(data, size, &encoded_size);
+  for (size_t i = 0; i < encoded_size; i++)
+  {
+    printf("%c\n", encoded[i]);
+  }
+  free(data);
+  free(encoded);
 }
