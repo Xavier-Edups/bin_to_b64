@@ -7,7 +7,8 @@ section .text
 global _encode_64_triplet
 _encode_64_triplet:
     ; uint32_t triplet_value = (triplet[0] << 16) | (triplet[1] << 8) | triplet[2]; // r8
-    mov  r8b, [rdi]
+    ; concatenacao dos bytes de entrada
+	mov  r8b, [rdi]
     shl  r8, 8
     mov  r8b, [rdi + 1]
     shl  r8, 8
@@ -15,10 +16,10 @@ _encode_64_triplet:
     mov  rax, r8
 
     ; encoded_triplet[0] = base_64_table[(triplet_value >> 18) & 0x3F];
-    mov  r9, r8
-    shr  r9, 18
-    and  r9, 0x3F
-    mov  r9b, [base_64_table + r9]
+	mov  r9, r8
+    shr  r9, 18 ; pega um byte
+    and  r9, 0x3F ; desse byte, pega 6 bits
+    mov  r9b, [base_64_table + r9] ; mapeia valor de 6 bits para base 64
     mov  [rdx], r9b
 
     ; encoded_triplet[1] = base_64_table[(triplet_value >> 12) & 0x3F];
@@ -27,7 +28,6 @@ _encode_64_triplet:
     and  r9, 0x3F
     mov  r9b, [base_64_table + r9]
     mov  [rdx + 1], r9b
-
 
     ; encoded_triplet[2] = base_64_table[(triplet_value >> 6) & 0x3F];
     mov  r9, r8
