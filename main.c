@@ -1,4 +1,5 @@
 #include "stdio.h"
+#include "string.h"
 
 #define PAD_MARKER '\0'
 
@@ -7,9 +8,16 @@ char *nasm_encode (char *bytes);
 
 int main (int argc, char** argv) {
     /* Verifica se número de argumentos está correto */
-    if (argc != 2) {
-        printf("Invalid number of arguments.\nUsage: bin_to_b64 <file>\n");
+    if (argc < 2 || argc > 3) {
+        printf("Invalid number of arguments.\nUsage: bin_to_b64 <file> [--decode]\n");
         return 1;
+    }
+
+    if (argc == 3) {
+        if (strcmp("--decode", argv[2])) {
+            printf("Flag \"%s\" doesn't exist.\nUsage: bin_to_b64 <file> [--decode]\n", argv[2]);
+            return 2;
+        }
     }
 
     /* Abre arquivo */
@@ -18,7 +26,7 @@ int main (int argc, char** argv) {
 
     if (!fp) {
         printf("Error: Cannot open file \"%s\".\n", argv[1]);
-        return 2;
+        return 3;
     }
 
     /* REMOVE debbug only */
@@ -26,9 +34,14 @@ int main (int argc, char** argv) {
     pad_b64(foo);
     printf("%s\n", foo);
 
-    /* Le arquivo de 3 em 3 bytes */
-    char bytes[3];
-    while (!feof(fp)) {
+    if (argc == 2) { /* Encode no arquivo binário */
+        /* Le arquivo de 3 em 3 bytes */
+        char bytes[3];
+        while (!feof(fp)) {
+            /* TODO */
+
+        }
+    } else { /* Decode de arquivo em base64 */
         /* TODO */
     }
 
